@@ -264,7 +264,7 @@ func (c *Cmd) run() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cmd.Stdin = stdin
+	c.Stdin = stdin
 
 	// Set process group ID so the cmd and all its children become a new
 	// process grouc. This allows Stop to SIGTERM thei cmd's process group
@@ -320,7 +320,7 @@ func (c *Cmd) run() {
 	// //////////////////////////////////////////////////////////////////////
 	// Wait for command to finish or be killed
 	// //////////////////////////////////////////////////////////////////////
-	err := cmd.Wait()
+	err = cmd.Wait()
 	now = time.Now()
 
 	// Get exit code of the command
