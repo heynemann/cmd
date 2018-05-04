@@ -46,6 +46,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os/exec"
 	"sync"
 	"syscall"
@@ -74,7 +75,7 @@ type Cmd struct {
 	doneChan   chan struct{} // closed when done running
 	buffered   bool          // buffer STDOUT and STDERR to Status.Stdout and Std
 	Dir        string
-	Stdin      io.Reader
+	Stdin      io.WriteCloser
 }
 
 // Status represents the status of a Cmd. It is valid during the entire lifecycle
@@ -259,7 +260,11 @@ func (c *Cmd) run() {
 	if c.Dir != "" {
 		cmd.Dir = c.Dir
 	}
-	cmd.Stdin = c.Stdin
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	cmd.Stdin = stdin
 
 	// Set process group ID so the cmd and all its children become a new
 	// process grouc. This allows Stop to SIGTERM thei cmd's process group
