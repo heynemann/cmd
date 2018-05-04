@@ -73,6 +73,7 @@ type Cmd struct {
 	statusChan chan Status   // nil until Start() called
 	doneChan   chan struct{} // closed when done running
 	buffered   bool          // buffer STDOUT and STDERR to Status.Stdout and Std
+	Dir        string
 }
 
 // Status represents the status of a Cmd. It is valid during the entire lifecycle
@@ -120,6 +121,9 @@ func NewCmd(name string, args ...string) *Cmd {
 
 // Options represents customizations for NewCmdOptions.
 type Options struct {
+	// Directory to run command in
+	Dir string
+
 	// If Buffered is true, STDOUT and STDERR are written to Status.Stdout and
 	// Status.Stderr. The caller can call Cmd.Status to read output at intervals.
 	Buffered bool
@@ -139,6 +143,9 @@ func NewCmdOptions(options Options, name string, args ...string) *Cmd {
 	if options.Streaming {
 		out.Stdout = make(chan string, DEFAULT_STREAM_CHAN_SIZE)
 		out.Stderr = make(chan string, DEFAULT_STREAM_CHAN_SIZE)
+	}
+	if options.Dir != "" {
+		out.Dir = options.Dir
 	}
 	return out
 }
@@ -247,6 +254,10 @@ func (c *Cmd) run() {
 	// Setup command
 	// //////////////////////////////////////////////////////////////////////
 	cmd := exec.Command(c.Name, c.Args...)
+
+	if c.Dir != "" {
+		cmd.Dir = c.Dir
+	}
 
 	// Set process group ID so the cmd and all its children become a new
 	// process grouc. This allows Stop to SIGTERM thei cmd's process group
